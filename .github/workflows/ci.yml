@@ -1,4 +1,4 @@
-name: Docker CI with Trivy
+name: CI/CD for Docker -> ECR
 
 on:
   push:
@@ -7,31 +7,43 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-scan:
+  build-and-push:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REGISTRY: 044445073324.dkr.ecr.us-east-1.amazonaws.com
+      FRONTEND_IMAGE: bdg-frontend
+      BACKEND_IMAGE: bdg-backend
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Build frontend image
-      run: docker build -t frontend:latest ./frontend
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | \
+          docker login --username AWS --password-stdin $ECR_REGISTRY
 
-    - name: Build backend image
-      run: docker build -t backend:latest ./backend
+      - name: Build Docker images
+        run: |
+          docker build -t $FRONTEND_IMAGE ./frontend
+          docker build -t $BACKEND_IMAGE ./backend
 
-    - name: Install Trivy
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: image
-        image-ref: frontend:latest
+      - name: Tag Docker images
+        run: |
+          docker tag $FRONTEND_IMAGE:latest $ECR_REGISTRY/$FRONTEND_IMAGE:latest
+          docker tag $BACKEND_IMAGE:latest $ECR_REGISTRY/$BACKEND_IMAGE:latest
 
-    - name: Scan backend image with Trivy
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: image
-        image-ref: backend:latest
+      - name: Push to Amazon ECR
+        run: |
+          docker push $ECR_REGISTRY/$FRONTEND_IMAGE:latest
+          docker push $ECR_REGISTRY/$BACKEND_IMAGE:latest
 

@@ -13,8 +13,8 @@ jobs:
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       ECR_REGISTRY: 044445073324.dkr.ecr.us-east-1.amazonaws.com
-      FRONTEND_IMAGE: bdg-frontend
-      BACKEND_IMAGE: bdg-backend
+      FRONTEND_IMAGE: bdg-docker-frontend
+      BACKEND_IMAGE: bdg-docker-backend
 
     steps:
       - name: Checkout code

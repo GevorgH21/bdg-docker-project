@@ -34,31 +34,31 @@ jobs:
 
       # FRONTEND
 
-      - name: Build frontend image
-        run: |
-          docker build -t $FRONTEND_IMAGE:latest ./frontend
+      #- name: Build frontend image
+      #  run: |
+      #    docker build -t $FRONTEND_IMAGE:latest ./frontend
 
-      - name: Tag frontend image
-        run: |
-          docker tag $FRONTEND_IMAGE:latest $ECR_REGISTRY/$FRONTEND_IMAGE:latest
+      # - name: Tag frontend image
+      #   run: |
+      #     docker tag $FRONTEND_IMAGE:latest $ECR_REGISTRY/$FRONTEND_IMAGE:latest
 
-      - name: Push frontend image
-        run: |
-          docker push $ECR_REGISTRY/$FRONTEND_IMAGE:latest
+      # - name: Push frontend image
+      #   run: |
+      #     docker push $ECR_REGISTRY/$FRONTEND_IMAGE:latest
 
       # BACKEND
 
-      - name: Build backend image
-        run: |
-          docker build -t $BACKEND_IMAGE:latest ./backend
+      # - name: Build backend image
+      #   run: |
+      #     docker build -t $BACKEND_IMAGE:latest ./backend
 
-      - name: Tag backend image
-        run: |
-          docker tag $BACKEND_IMAGE:latest $ECR_REGISTRY/$BACKEND_IMAGE:latest
+      # - name: Tag backend image
+      #   run: |
+      #     docker tag $BACKEND_IMAGE:latest $ECR_REGISTRY/$BACKEND_IMAGE:latest
 
-      - name: Push backend image
-        run: |
-          docker push $ECR_REGISTRY/$BACKEND_IMAGE:latest
+      # - name: Push backend image
+      #   run: |
+      #     docker push $ECR_REGISTRY/$BACKEND_IMAGE:latest
 
       # TERRAFORM
 

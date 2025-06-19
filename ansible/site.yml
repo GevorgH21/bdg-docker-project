@@ -1,0 +1,59 @@
+---
+- hosts: web
+  become: true
+
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: true
+
+    - name: Install unzip (needed for AWS CLI)
+      apt:
+        name: unzip
+        state: present
+
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Install AWS CLI
+      shell: |
+        curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip -q awscliv2.zip
+        sudo ./aws/install --update
+      args:
+        chdir: /home/{{ ansible_user }}
+        creates: /usr/local/bin/aws
+
+    - name: Log in to AWS ECR
+      shell: |
+        aws ecr get-login-password --region us-east-1 | \
+        docker login --username AWS --password-stdin {{ lookup('env', 'ECR_REGISTRY') }}
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+
+    - name: Create app directory
+      file:
+        path: /home/{{ ansible_user }}/app
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Upload docker-compose.yml
+      copy:
+        src: ../docker-compose.yml
+        dest: /home/{{ ansible_user }}/app/docker-compose.yml
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Start Docker Compose app
+      shell: |
+        docker compose up -d
+      args:
+        chdir: /home/{{ ansible_user }}/app
+

@@ -1,0 +1,38 @@
+name: Ansible Deployment
+
+on:
+  workflow_run:
+    workflows: ["Terraform CI/CD"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Decode SSH private key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > ~/.ssh/key.pem
+          chmod 600 ~/.ssh/key.pem
+
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+
+      - name: Render inventory from template
+        run: |
+          export HOST=${{ secrets.EC2_HOST }}
+          export USER=${{ secrets.EC2_USER }}
+          envsubst < ansible/inventory.ini.j2 > ansible/inventory.ini
+
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook ansible/site.yml \
+            -i ansible/inventory.ini
